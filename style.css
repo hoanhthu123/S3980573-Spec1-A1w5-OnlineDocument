@@ -1,0 +1,393 @@
+/* Roboto is embedded by the renderer from REPORT_FONT_CSS (defined below in
+   this file), so reports need no network to show it. */
+
+/* ------------------------------------------------------------------
+   Report stylesheet: minimalist, high data-ink ratio.
+
+   Following Tufte: erase non-data ink. Almost no boxes or fills; a
+   short gray ramp; whitespace and type weight do the work that
+   borders and shading used to. White page, centered ~820px reading
+   column, fixed TOC in the left gutter, NO box-shadow.
+
+   The palette is a short gray ramp held in custom properties on :root
+   (light values) and overridden for dark mode (see the two dark blocks
+   below). Light ramp:
+     --ink      #222  primary text / headings
+     --ink-2    #444  secondary headings, de-emphasised body
+     --muted    #666  meta, captions, TOC links
+     --rule     #ccc  structural rule (header underline, table header, change-bars)
+     --hairline #eee  hairline (table row separators, faint dividers)
+     --fill     #f5f5f5  the one subtle fill (inline code / pre)
+     --bg       #fff  page
+   Color is reserved for status, where it encodes meaning.
+
+   Theme contract: with no attribute on <html>, the report follows the
+   reader's system preference (prefers-color-scheme). <html data-theme="dark">
+   forces dark; <html data-theme="light"> forces light. The editor sets this
+   attribute on its preview; saved reports carry none.
+   ------------------------------------------------------------------ */
+
+/* --header-h approximates the sticky header's height (project eyebrow +
+   title + meta line, plus an optional working-directory line). Drives the
+   anchor-jump offset and the TOC's top inset. The 130px here is a static
+   fallback only: a small inline script (see just before </body>) measures the
+   real header at runtime and overrides this with the header's actual height,
+   so wrapped titles or the optional working-directory line stay accounted for. */
+:root {
+    --heading:  #70876B;
+    --header-h: 130px;
+    /* Light palette. Both themes define the same set of names. */
+    color-scheme: light dark;
+    --bg: #fff;
+    --ink: #222;
+    --ink-2: #444;
+    --muted: #666;
+    --rule: #ccc;
+    --hairline: #eee;
+    --fill: #f5f5f5;
+    --underline: #bbb;
+    --ok: #2e7d32;
+    --bad: #c62828;
+    --warn: #946c00;
+    /* Type scale: five sizes, each step recognizably distinct (~1.2 ratio).
+       Every element maps to one of these; nothing sits between them. Roles:
+       small = meta/caption/eyebrow/TOC/code/tables/labels/status;
+       body  = copy, list items, definitions, and h4 (weight, not size, sets
+       h4 apart). h4 deliberately shares the body size to avoid a near-duplicate. */
+    --fs-small: 12px;
+    --fs-body:  14px;
+    --fs-h3:    17px;
+    --fs-h2:    20px;
+    --fs-h1:    24px;
+}
+
+/* Dark palette: near-black page, light gray ink, rules a little lighter
+   than the page, code fill a little lighter still. Status colours are
+   lifted so they keep at least 4.5:1 against --bg. Images are untouched. */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+    --bg: #1b1b1b;
+    --ink: #d9d9d9;
+    --ink-2: #bdbdbd;
+    --muted: #9c9c9c;
+    --rule: #4d4d4d;
+    --hairline: #303030;
+    --fill: #262626;
+    --underline: #6a6a6a;
+    --ok: #7fc784;
+    --bad: #f08a8a;
+    --warn: #ddb04f;
+    }
+}
+:root[data-theme="dark"] {
+    --bg: #1b1b1b;
+    --ink: #d9d9d9;
+    --ink-2: #bdbdbd;
+    --muted: #9c9c9c;
+    --rule: #4d4d4d;
+    --hairline: #303030;
+    --fill: #262626;
+    --underline: #6a6a6a;
+    --ok: #7fc784;
+    --bad: #f08a8a;
+    --warn: #ddb04f;
+}
+
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: var(--header-h);
+}
+
+body {
+    font-family: "Roboto", sans-serif;
+    background-color: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    /* override max-width that pandoc/other generators may inject on body */
+    max-width: none;
+}
+
+/* ---- Full-width sticky header: title + a single meta line ---- */
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: var(--bg);
+    border-bottom: 1px solid var(--rule);
+    padding: 16px;
+}
+/* Byline (name, student number): small eyebrow/kicker above the title. */
+.header-byline {
+    margin: 0 0 2px;
+    color: var(--muted);
+    font-size: var(--fs-small);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+.header-title {
+    /* reset the default h1 styling; this h1 lives in the header bar */
+    margin: 0 0 4px;
+    padding: 0;
+    border: none;
+    color: var(--heading);
+    font-size: var(--fs-h1);
+    font-weight: 700;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.header .meta { margin: 0; }
+
+/* ---- Table of contents: fixed in the left gutter ---- */
+.toc {
+    position: fixed;
+    top: var(--header-h);
+    left: 0;
+    width: 220px;
+    height: calc(100vh - var(--header-h));
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 20px 0;
+    font-size: var(--fs-small);
+}
+.toc-title {
+    color: var(--ink);
+    font-weight: 700;
+    font-size: var(--fs-small);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0 16px 8px;
+}
+.toc a {
+    display: block;
+    padding: 3px 16px;
+    color: var(--muted);
+    text-decoration: none;
+}
+.toc a:hover { color: var(--ink); text-decoration: underline; }
+
+/* Operator / Follows pinned to the bottom of the TOC, under a rule. */
+.toc-rule {
+    border: none;
+    border-top: 1px solid var(--hairline);
+    margin: 14px 16px;
+}
+.toc-meta {
+    padding: 0 16px;
+    color: var(--muted);
+    font-size: var(--fs-small);
+    line-height: 1.7;
+}
+
+/* The fixed TOC only fits when the gutter beside the 820px column is
+   wide enough. Below that, hide it and read top-to-bottom. */
+@media (max-width: 1280px) {
+    .toc { display: none; }
+}
+
+/* ---- Reading column ---- */
+.container {
+    max-width: 820px;
+    /* horizontal gutter so the column never touches the viewport edge */
+    width: calc(100% - 2 * clamp(16px, 3vw, 40px));
+    margin: clamp(16px, 3vw, 40px) auto 64px;
+    box-sizing: border-box;
+}
+
+/* ---- Headings: size and weight, not rules ---- */
+h1 {
+    color: var(--heading);
+    font-size: var(--fs-h1);
+    font-weight: 700;
+    text-transform: uppercase;
+    margin: 24px 0 12px;
+}
+h2 {
+    color: var(--heading);
+    font-size: var(--fs-h2);
+    font-weight: 700;
+    margin: 36px 0 10px;
+}
+h3 {
+    color: var(--heading);
+    font-size: var(--fs-h3);
+    font-weight: 500;
+    margin: 20px 0 8px;
+}
+h4 { color: var(--heading); font-size: var(--fs-body); margin: 16px 0 6px; }
+
+/* ---- Body copy ---- */
+p, li { font-size: var(--fs-body); }
+ul, ol { padding-left: 20px; }
+ul { list-style-type: disc; }
+li { margin-bottom: 4px; }
+a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--underline); }
+a:hover { text-decoration-color: var(--ink); }
+
+/* ---- Meta lines (header + footer) ---- */
+.meta {
+    font-size: var(--fs-small);
+    color: var(--muted);
+    font-weight: 300;
+    line-height: 1.5;
+}
+
+/* ---- Code: the one subtle fill ---- */
+code {
+    background-color: var(--fill);
+    padding: 1px 4px;
+    font-size: var(--fs-small);
+    font-family: "Courier New", Courier, monospace;
+}
+pre {
+    background-color: var(--fill);
+    padding: 12px 14px;
+    margin: 12px 0;
+    font-size: var(--fs-small);
+    overflow-x: auto;
+    font-family: "Courier New", Courier, monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+pre code { background: none; padding: 0; }
+
+/* ---- Tables: horizontal rules only, no fills, no vertical lines ---- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: var(--fs-body);
+}
+th, td {
+    padding: 6px 10px;
+    text-align: left;
+    vertical-align: top;
+    border: none;
+}
+thead th,
+tr:first-child th {
+    border-bottom: 1px solid var(--rule);
+    font-weight: 600;
+}
+td { border-bottom: 1px solid var(--hairline); }
+
+/* ---- Images: no frame ---- */
+img { max-width: 100%; margin: 12px 0; }
+.img-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
+.img-row img { flex: 1 1 200px; min-width: 0; max-width: 100%; margin: 0; }
+/* Small side-by-side figures (e.g. making vs edited sound) */
+.sound-row { max-width: 640px; align-items: flex-start; }
+.sound-row figure { flex: 1 1 200px; min-width: 0; margin: 0; }
+.sound-row figure img { width: 100%; height: 200px; object-fit: cover; margin: 0; border-radius: 4px; }
+.sound-row figcaption { font-size: 13px; color: var(--muted); margin-top: 4px; }
+/* Coding Process figures: smaller, grouped images sit side by side */
+.fig-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0; max-width: 720px; align-items: flex-start; }
+.fig-row.single { max-width: 480px; }
+.fig-row figure { flex: 1 1 200px; min-width: 0; margin: 0; }
+.fig-row img { width: 100%; height: auto; margin: 0; border-radius: 4px; }
+.fig-row figcaption { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+/* ==================================================================
+   Semantic blocks. No boxes or fills. A few keep a single light
+   left "change-bar" where the block is an inserted artifact worth
+   setting apart; the rest rely on their heading and on whitespace.
+   ================================================================== */
+
+/* Quote, problem record, lesson: a thin left rule, nothing more. */
+.userquote,
+.bug,
+.lessons {
+    border: none;
+    background: none;
+    margin: 16px 0;
+    padding: 2px 0 2px 16px;
+    border-left: 2px solid var(--rule);
+}
+.userquote { font-style: italic; color: var(--ink-2); }
+
+/* Prompt: plain container; the inner <pre> carries the subtle fill. */
+.prompt-box,
+.prompt {
+    border: none;
+    background: none;
+    margin: 16px 0;
+    padding: 0;
+    font-size: var(--fs-small);
+}
+
+/* Abstract, slide callouts and phase steps: no box; the heading labels them. */
+.abstract,
+.slide,
+.phase {
+    border: none;
+    background: none;
+    margin: 12px 0;
+    padding: 0;
+}
+.slide h3,
+.phase h3 { margin-top: 0; }
+
+/* Bug / fix record. */
+.bug h3 { margin-top: 0; color: var(--heading); }
+.bug dl { margin: 6px 0 0; }
+.bug dt { font-weight: 600; color: var(--ink-2); margin-top: 6px; font-size: var(--fs-body); }
+.bug dd { margin: 2px 0 0 16px; color: var(--ink); font-size: var(--fs-body); }
+
+/* Inline metric: monospace, no box. */
+.metric {
+    font-family: "Courier New", Courier, monospace;
+    font-size: var(--fs-small);
+    color: var(--ink-2);
+    margin-right: 14px;
+    white-space: nowrap;
+}
+
+/* File list: a plain list; paths come through as <code>. */
+.file-list { margin: 12px 0; }
+.file-list ul { margin: 0; }
+.file-list li { margin: 2px 0; font-size: var(--fs-small); }
+
+/* Tier label: small caps, no pill. */
+.tier {
+    font-size: var(--fs-small);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+/* Status: color carries the meaning; no border, no fill. */
+.status {
+    font-size: var(--fs-small);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.status.verified,
+.status.done,
+.status.fixed       { color: var(--ok); }
+.status.incorrect,
+.status.broken      { color: var(--bad); }
+.status.unverified,
+.status.pending     { color: var(--warn); }
+
+/* Footer: a single light rule above a muted meta line. */
+.footer {
+    margin-top: 40px;
+    border-top: 1px solid var(--hairline);
+    padding-top: 10px;
+    font-size: var(--fs-small);
+    color: var(--muted);
+    font-weight: 300;
+}
+
+/* ---- Narrow viewport ---- */
+@media (max-width: 480px) {
+    /* Shrink the top of the scale on narrow viewports; body/small stay put. */
+    :root { --fs-h1: 20px; --fs-h2: 18px; }
+    h2 { margin-top: 24px; }
+    th, td { padding: 4px 6px; }
+}
